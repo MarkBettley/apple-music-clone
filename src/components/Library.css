@@ -1,0 +1,11 @@
+.library {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 1rem;
+}
+
+.library__empty {
+    text-align: center;
+    color: #b3b3b3;
+    margin-top: 2rem;
+}
