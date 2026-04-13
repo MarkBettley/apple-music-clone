@@ -1,11 +1,19 @@
 .search-results {
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 16px;
-    padding: 1rem;
+  margin-bottom: 2rem;
 }
-
+.section-title {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  border-left: 4px solid #ff3b30;
+  padding-left: 1rem;
+}
 .songs-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.no-results {
+  text-align: center;
+  color: #b3b3b3;
+  padding: 2rem;
 }
