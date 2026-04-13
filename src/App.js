@@ -1,28 +1,41 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './components/Header';
+import SearchBar from './components/SearchBar';
 import SearchResults from './components/SearchResults';
 import Library from './components/Library';
+import SongDetail from './components/SongDetail';
+import useFetch from './hooks/useFetch';
 
-// Datos ficticios de canciones (resultados de búsqueda)
-const initialSearchResults = [
-    { id: 1, title: "Blinding Lights", artist: "The Weeknd", duration: "3:20", albumCover: "https://upload.wikimedia.org/wikipedia/en/9/9d/The_Weeknd_-_Blinding_Lights.png" },
-    { id: 2, title: "Levitating", artist: "Dua Lipa", duration: "3:23", albumCover: "https://upload.wikimedia.org/wikipedia/en/5/54/Dua_Lipa_-_Levitating.png" },
-    { id: 3, title: "Save Your Tears", artist: "The Weeknd", duration: "3:35", albumCover: "https://upload.wikimedia.org/wikipedia/en/5/5a/The_Weeknd_-_Save_Your_Tears.png" },
-    { id: 4, title: "Don't Start Now", artist: "Dua Lipa", duration: "3:03", albumCover: "https://upload.wikimedia.org/wikipedia/en/3/3a/Dua_Lipa_-_Don%27t_Start_Now.png" },
-    { id: 5, title: "Shape of You", artist: "Ed Sheeran", duration: "3:53", albumCover: "https://upload.wikimedia.org/wikipedia/en/4/45/Shape_of_You.png" }
-];
+function Home({ librarySongs, setLibrarySongs }) {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [query, setQuery] = useState('');
 
-function App() {
-    const [searchResults] = useState(initialSearchResults);
-    const [librarySongs, setLibrarySongs] = useState([]);
+    const url = query
+        ? `https://theaudiodb.com/api/v1/json/2/searchalbum.php?s=${encodeURIComponent(query)}`
+        : null;
+
+    const { data, loading, error, retry } = useFetch(url);
+
+    // Transformar álbumes → canciones
+    const songs = data?.album
+        ? data.album.map((album) => ({
+              id: album.idAlbum,
+              title: album.strAlbum,
+              artist: album.strArtist,
+              album: album.strAlbum,
+              albumCover: album.strAlbumThumb,
+              year: album.intYearReleased,
+          }))
+        : [];
 
     useEffect(() => {
         console.log(`📚 Biblioteca actualizada. Tienes ${librarySongs.length} canciones.`);
     }, [librarySongs]);
 
     const addToLibrary = (song) => {
-        if (!librarySongs.some(s => s.id === song.id)) {
+        if (!librarySongs.some((s) => s.id === song.id)) {
             setLibrarySongs([...librarySongs, song]);
             console.log(`✅ Agregada: ${song.title}`);
         } else {
@@ -30,14 +43,55 @@ function App() {
         }
     };
 
+    const handleSearch = (term) => {
+        setQuery(term);
+    };
+
     return (
-        <div className="app">
-            <Header />
+        <>
+            <SearchBar
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                onSearch={handleSearch}
+            />
             <main className="main-content">
-                <SearchResults results={searchResults} onAdd={addToLibrary} />
+                {loading && <p className="status-message">Cargando...</p>}
+                {error && (
+                    <div className="error-message">
+                        <p>Hubo un problema al cargar los datos. Intenta nuevamente.</p>
+                        <button onClick={retry}>Reintentar</button>
+                    </div>
+                )}
+                {!loading && !error && (
+                    <SearchResults results={songs} onAdd={addToLibrary} />
+                )}
                 <Library songs={librarySongs} />
             </main>
-        </div>
+        </>
+    );
+}
+
+function App() {
+    const [librarySongs, setLibrarySongs] = useState([]);
+
+    return (
+        <BrowserRouter>
+            <div className="app">
+                <Header />
+                <Routes>
+                    <Route
+                        path="/"
+                        element={
+                            <Home
+                                librarySongs={librarySongs}
+                                setLibrarySongs={setLibrarySongs}
+                            />
+                        }
+                    />
+                    <Route path="/song/:id" element={<SongDetail />} />
+                </Routes>
+            </div>
+        </BrowserRouter>
     );
 }
 
